@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [[ $# -lt 7 ]]; then
+if [[ $# -lt 6 ]]; then
     echo "Too few arguments!"
     echo "$0 <mavlink_addr> <mavlink_udp_port> <mavlink_tcp_port> <name> <pos_x> <pos_y>"
     exit 1
