@@ -27,7 +27,7 @@ RUN curl -fsSL https://github.com/mavlink/MAVSDK/releases/download/v0.34.0/mavsd
 # Install PX4 SITL
 RUN curl -fsSL https://github.com/tiiuae/px4-firmware/releases/download/v1.11.0-1.0.1/px4_sitl_build.tar.gz -o px4_sitl_build.tar.gz \
     && tar -xzf px4_sitl_build.tar.gz \
-    && mv px4_sitl/build/px4_sitl_rtps/bin/px4 /usr/bin/ \
+    && mv px4_sitl/build/px4_sitl_rtps/bin/* /usr/bin/ \
     && mv px4_sitl/build/px4_sitl_rtps/etc /px4_sitl_etc \
     && rm -rf px4_sitl_build/ \
     && rm px4_sitl_build.tar.gz
