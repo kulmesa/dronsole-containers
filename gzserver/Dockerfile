@@ -16,6 +16,17 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends \
     python3-numpy \
     && rm -rf /var/lib/apt/lists/*
 
+# For GStreamer camera
+RUN apt-get update -y && apt-get install -y --no-install-recommends \
+    libgstreamer1.0-0 \
+    gstreamer1.0-plugins-base \
+    gstreamer1.0-plugins-good \
+    gstreamer1.0-plugins-bad \
+    gstreamer1.0-plugins-ugly \
+    xvfb \
+    libopencv-imgproc-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN mkdir /gzserver-api
 WORKDIR /gzserver-api
 COPY scripts/launch-gzserver.sh                     scripts/launch-gzserver.sh

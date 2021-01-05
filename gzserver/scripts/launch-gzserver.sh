@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# For Gstreamer camera
+export DISPLAY=:1.0
+Xvfb :1 -screen 0 1600x1200x16 &
+
 export PX4_SIM_MODEL=ssrc_fog_x
 source /usr/share/gazebo/setup.sh
 
