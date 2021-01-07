@@ -11,5 +11,5 @@ docker build -t tii-mqtt-server .
 ## Run
 
 ```
-docker run -p 8883:8883 tii-mqtt-server
+docker run --rm -it -p 8883:8883 tii-mqtt-server
 ```
