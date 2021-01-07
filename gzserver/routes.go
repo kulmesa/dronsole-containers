@@ -14,8 +14,8 @@ import (
 )
 
 func registerRoutes(router *httprouter.Router) {
-	router.HandlerFunc(http.MethodGet, "/simulation/start", startSimulationHandler)
-	router.HandlerFunc(http.MethodGet, "/simulation/stop", stopSimulationHandler)
+	router.HandlerFunc(http.MethodPost, "/simulation/start", startSimulationHandler)
+	router.HandlerFunc(http.MethodPost, "/simulation/stop", stopSimulationHandler)
 
 	router.HandlerFunc(http.MethodGet, "/simulation/drones", listDronesHandler)
 	router.HandlerFunc(http.MethodPost, "/simulation/drones", createDroneHandler)
@@ -39,7 +39,7 @@ func startSimulationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var err error
-	gzserverCmd, err = startCommandWithLogging("gzserver", "bash", "-c", "/gzserver-api/scripts/launch-gzserver.sh")
+	gzserverCmd, err = startCommandWithLogging("gzserver: ", "bash", "-c", "/gzserver-api/scripts/launch-gzserver.sh")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -73,6 +73,11 @@ func listDronesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func createDroneHandler(w http.ResponseWriter, r *http.Request) {
+	if gzserverCmd == nil {
+		log.Printf("Simulation not running")
+		http.Error(w, "Simulation not running", http.StatusBadRequest)
+		return
+	}
 	var requestBody struct {
 		DroneLocation  string `json:"drone_location"`
 		DeviceID       string `json:"device_id"`
@@ -117,7 +122,7 @@ func createDroneHandler(w http.ResponseWriter, r *http.Request) {
 		requestBody.PosY)
 
 	// add drone model and connect it to the mavlink
-	droneSpawnCmd, err := startCommandWithLogging("drone", "bash", "-c", command)
+	droneSpawnCmd, err := startCommandWithLogging(fmt.Sprintf("drone (%s): ", requestBody.DeviceID), "bash", "-c", command)
 	if err != nil {
 		log.Printf("Could not spawn drone model: %v", err)
 		http.Error(w, "Could not spawn drone model", http.StatusInternalServerError)

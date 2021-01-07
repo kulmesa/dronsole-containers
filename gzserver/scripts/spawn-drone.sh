@@ -21,7 +21,7 @@ export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:/data/models
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/plugins
 export PATH=$PATH:/data/plugins
 
-echo "starting instance $name in $(pwd)"
+echo "Starting instance $name"
 
 python3 /data/scripts/jinja_gen.py /data/models/${PX4_SIM_MODEL}/${PX4_SIM_MODEL}.sdf.jinja /data \
         --use_tcp 0 \
@@ -29,7 +29,7 @@ python3 /data/scripts/jinja_gen.py /data/models/${PX4_SIM_MODEL}/${PX4_SIM_MODEL
         --mavlink_udp_port "${mavlink_udp_port}" \
         --mavlink_tcp_port "${mavlink_tcp_port}" \
         --gstudphost "${mav_addr}" \
-        --output-file "/tmp/${PX4_SIM_MODEL}_${name}.sdf"
+        --output-file "/tmp/${PX4_SIM_MODEL}_${name}.sdf" || exit
 
 echo "Spawning ${PX4_SIM_MODEL}_${name}"
 
@@ -37,4 +37,6 @@ gz model --spawn-file="/tmp/${PX4_SIM_MODEL}_${name}.sdf" \
          --model-name="${PX4_SIM_MODEL}_${name}" \
          -x "${pos_x}" \
          -y "${pos_y}" \
-         -z 0.0
+         -z 0.0 || exit
+
+echo "Done"

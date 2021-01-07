@@ -2,19 +2,18 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"log"
+	"os"
 	"os/exec"
 	"syscall"
 )
 
-func logPipe(pre string, pipe io.ReadCloser) {
+func logPipe(logger *log.Logger, pipe io.ReadCloser) {
 	scanner := bufio.NewScanner(pipe)
 	for scanner.Scan() {
-		log.Printf("%s: %s", pre, scanner.Text())
+		logger.Print(scanner.Text())
 	}
-	log.Printf("%s: --DONE--", pre)
 }
 
 func startCommandWithLogging(logPrefix string, name string, arg ...string) (*exec.Cmd, error) {
@@ -28,8 +27,8 @@ func startCommandWithLogging(logPrefix string, name string, arg ...string) (*exe
 	if err != nil {
 		return nil, err
 	}
-	go logPipe(fmt.Sprintf("%s out", logPrefix), stdout)
-	go logPipe(fmt.Sprintf("%s err", logPrefix), stderr)
+	go logPipe(log.New(os.Stdout, logPrefix, log.LstdFlags), stdout)
+	go logPipe(log.New(os.Stderr, logPrefix, log.LstdFlags), stderr)
 	err = cmd.Start()
 	if err != nil {
 		return nil, err
