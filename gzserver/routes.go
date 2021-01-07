@@ -17,12 +17,18 @@ func registerRoutes(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodGet, "/simulation/start", startSimulationHandler)
 	router.HandlerFunc(http.MethodGet, "/simulation/stop", stopSimulationHandler)
 
-	router.HandlerFunc(http.MethodPost, "/simulation/drone", createDroneHandler)
-	router.HandlerFunc(http.MethodDelete, "/simulation/drone/:id", deleteDroneHandler)
+	router.HandlerFunc(http.MethodGet, "/simulation/drones", listDronesHandler)
+	router.HandlerFunc(http.MethodPost, "/simulation/drones", createDroneHandler)
+	router.HandlerFunc(http.MethodDelete, "/simulation/drones/:id", deleteDroneHandler)
+}
+
+type Drone struct {
+	Location string
 }
 
 var (
 	gzserverCmd *exec.Cmd
+	drones      map[string]*Drone = make(map[string]*Drone)
 )
 
 func startSimulationHandler(w http.ResponseWriter, r *http.Request) {
@@ -49,8 +55,26 @@ func stopSimulationHandler(w http.ResponseWriter, r *http.Request) {
 	gzserverCmd = nil
 }
 
+func listDronesHandler(w http.ResponseWriter, r *http.Request) {
+	type drone struct {
+		DeviceID      string `json:"device_id"`
+		DroneLocation string `json:"drone_location"`
+	}
+
+	droneList := make([]drone, 0)
+	for id, d := range drones {
+		droneList = append(droneList, drone{
+			DeviceID:      id,
+			DroneLocation: d.Location,
+		})
+	}
+
+	writeJSON(w, droneList)
+}
+
 func createDroneHandler(w http.ResponseWriter, r *http.Request) {
 	var requestBody struct {
+		DroneLocation  string `json:"drone_location"`
 		DeviceID       string `json:"device_id"`
 		MAVLinkAddress string `json:"mavlink_address"`
 		MAVLinkUDPPort int32  `json:"mavlink_udp_port"`
@@ -63,6 +87,13 @@ func createDroneHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Could not decode body: %v", err)
 		http.Error(w, "Malformatted body", http.StatusBadRequest)
+		return
+	}
+
+	_, ok := drones[requestBody.DeviceID]
+	if ok {
+		log.Printf("Request to add drone with device id already in use")
+		http.Error(w, "DeviceID already in use", http.StatusBadRequest)
 		return
 	}
 
@@ -106,6 +137,21 @@ func createDroneHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	drones[requestBody.DeviceID] = &Drone{
+		Location: requestBody.DroneLocation,
+	}
 }
 func deleteDroneHandler(w http.ResponseWriter, r *http.Request) {
+}
+
+func writeJSON(w http.ResponseWriter, data interface{}) {
+	b, err := json.Marshal(data)
+	if err != nil {
+		log.Printf("Could not marshal data to json: %v", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(b)
 }
