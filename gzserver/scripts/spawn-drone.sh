@@ -24,11 +24,11 @@ export PATH=$PATH:/data/plugins
 echo "starting instance $name in $(pwd)"
 
 python3 /data/scripts/jinja_gen.py /data/models/${PX4_SIM_MODEL}/${PX4_SIM_MODEL}.sdf.jinja /data \
-        --qgc_addr 172.17.0.1 \
         --use_tcp 0 \
         --mavlink_addr "${mav_addr}" \
         --mavlink_udp_port "${mavlink_udp_port}" \
         --mavlink_tcp_port "${mavlink_tcp_port}" \
+        --gstudphost "${mav_addr}" \
         --output-file "/tmp/${PX4_SIM_MODEL}_${name}.sdf"
 
 echo "Spawning ${PX4_SIM_MODEL}_${name}"
