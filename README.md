@@ -32,7 +32,7 @@ openssl req -x509 -newkey rsa:2048 -keyout drone_identity_private.pem -nodes -ou
 
 Run drone container and add to simulation
 ```
-docker run --rm -it --network=host -e DRONE_DEVICE_ID="deviceid" -e DRONE_IDENTITY_KEY="$(cat drone_identity_private.pem)" -e MQTT_BROKER_ADDRESS="tcp://localhost:8883" tii-fog-drone
+docker run --rm -it -p 4560:4560 -p 14560:14560/udp -e DRONE_DEVICE_ID="deviceid" -e DRONE_IDENTITY_KEY="$(cat drone_identity_private.pem)" -e MQTT_BROKER_ADDRESS="tcp://<host.docker.internal>:8883" tii-fog-drone
 
 curl -d '{"drone_location":"local","device_id":"deviceid","mavlink_address":"<host.docker.internal>","mavlink_tcp_port":4560,"mavlink_udp_port":14560,"pos_x":0,"pos_y":0}' localhost:8081/simulation/drones
 ```
