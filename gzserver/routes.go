@@ -37,6 +37,7 @@ func startSimulationHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Simulation already running", http.StatusBadRequest)
 		return
 	}
+	log.Printf("Starting simulation")
 
 	var err error
 	gzserverCmd, err = startCommandWithLogging("gzserver: ", "bash", "-c", "/gzserver-api/scripts/launch-gzserver.sh")
@@ -50,12 +51,18 @@ func stopSimulationHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Simulation not running", http.StatusBadRequest)
 		return
 	}
+	log.Printf("Stopping simulation")
 	syscall.Kill(-gzserverCmd.Process.Pid, syscall.SIGKILL)
-	log.Printf("gzserver killed")
 	gzserverCmd = nil
 }
 
 func listDronesHandler(w http.ResponseWriter, r *http.Request) {
+	if gzserverCmd == nil {
+		log.Printf("Simulation not running")
+		http.Error(w, "Simulation not running", http.StatusBadRequest)
+		return
+	}
+
 	type drone struct {
 		DeviceID      string `json:"device_id"`
 		DroneLocation string `json:"drone_location"`
@@ -147,6 +154,11 @@ func createDroneHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func deleteDroneHandler(w http.ResponseWriter, r *http.Request) {
+	if gzserverCmd == nil {
+		log.Printf("Simulation not running")
+		http.Error(w, "Simulation not running", http.StatusBadRequest)
+		return
+	}
 }
 
 func writeJSON(w http.ResponseWriter, data interface{}) {
