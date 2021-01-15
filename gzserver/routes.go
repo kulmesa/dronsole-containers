@@ -37,10 +37,27 @@ func startSimulationHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Simulation already running", http.StatusBadRequest)
 		return
 	}
+
+	var requestBody struct {
+		WorldFile string `json:"world_file"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&requestBody)
+	if err != nil {
+		log.Printf("Could not decode body: %v", err)
+		http.Error(w, "Malformatted body", http.StatusBadRequest)
+		return
+	}
 	log.Printf("Starting simulation")
 
-	var err error
-	gzserverCmd, err = startCommandWithLogging("gzserver: ", "bash", "-c", "/gzserver-api/scripts/launch-gzserver.sh")
+	worldFile := requestBody.WorldFile
+	if len(worldFile) == 0 {
+		worldFile = "empty.world"
+	}
+
+	worldFile = fmt.Sprintf("/data/worlds/%s", worldFile)
+
+	gzserverCmd, err = startCommandWithLogging("gzserver: ", "bash", "-c", fmt.Sprintf("/gzserver-api/scripts/launch-gzserver.sh %s", worldFile))
 	if err != nil {
 		log.Fatal(err)
 	}

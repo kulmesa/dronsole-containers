@@ -1,5 +1,13 @@
 #!/bin/bash
 
+if [[ $# -lt 1 ]]; then
+    echo "Too few arguments!"
+    echo "$0 <world_file>"
+    exit 1
+fi
+
+world_file=$1
+
 # For Gstreamer camera
 export DISPLAY=:1.0
 Xvfb :1 -screen 0 1600x1200x16 &
@@ -14,4 +22,4 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/plugins
 
 echo "Starting gazebo"
 IP_ADDR=$(hostname -I)
-GAZEBOIP=${IP_ADDR} GAZEBOMASTER_URI=${IP_ADDR}:11345 gzserver /data/worlds/empty.world --verbose
+GAZEBOIP=${IP_ADDR} GAZEBOMASTER_URI=${IP_ADDR}:11345 gzserver "$world_file" --verbose
