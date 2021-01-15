@@ -145,6 +145,12 @@ func createFleetHandler(w http.ResponseWriter, r *http.Request) {
 	go g.Serve(gitListener)
 
 	fleets[slug] = f
+
+	var response struct {
+		GitPort int `json:"git_port"`
+	}
+	response.GitPort = gitPort
+	writeJSON(w, response)
 }
 
 func deleteFleetHandler(w http.ResponseWriter, r *http.Request) {
