@@ -13,6 +13,7 @@ func registerRoutes(router *httprouter.Router) {
 	router.HandlerFunc(http.MethodPost, "/fleets", createFleetHandler)
 	router.HandlerFunc(http.MethodDelete, "/fleets/:slug", deleteFleetHandler)
 	router.HandlerFunc(http.MethodPost, "/fleets/:slug/drones", addDroneToFleetHandler)
+	router.HandlerFunc(http.MethodPost, "/fleets/:slug/backlog", addTaskToBacklogHandler)
 }
 
 func writeJSON(w http.ResponseWriter, data interface{}) {

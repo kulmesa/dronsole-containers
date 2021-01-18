@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"time"
@@ -249,6 +250,67 @@ func addDroneToFleetHandler(w http.ResponseWriter, r *http.Request) {
 	drones[requestBody.DeviceID] = slug
 }
 
+func addTaskToBacklogHandler(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+	params := httprouter.ParamsFromContext(c)
+	slug := params.ByName("slug")
+
+	var requestBody struct {
+		Type     string `json:"type"`
+		Priority int64  `json:"priority"`
+		Payload  string `json:"payload"`
+	}
+	err := json.NewDecoder(r.Body).Decode(&requestBody)
+	defer r.Body.Close()
+	if err != nil {
+		log.Printf("Could not decode body: %v", err)
+		http.Error(w, "Malformed request body", http.StatusBadRequest)
+		return
+	}
+
+	f, ok := fleets[slug]
+	if !ok {
+		log.Printf("Unknown fleet: %s", slug)
+		http.Error(w, "Unknown fleet", http.StatusBadRequest)
+		return
+	}
+
+	// add task to git
+	err = f.addTask(c, requestBody.Type, requestBody.Priority, requestBody.Payload)
+	if err != nil {
+		log.Printf("Could not add task to backlog: %v", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	// send update to all drones in the fleet
+	msg, err := json.Marshal(struct {
+		Command string
+		Payload interface{}
+	}{
+		Command: "update-backlog",
+		Payload: "",
+	})
+	if err != nil {
+		log.Printf("Could not marshal initialize-trust command: %v\n", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	for _, drone := range f.Drones {
+		pubtok := mqttClient.Publish(fmt.Sprintf("/devices/%s/commands/control", drone.DeviceID), 1, false, msg)
+		if !pubtok.WaitTimeout(time.Second * 2) {
+			log.Printf("Publish timeout for '%v'", drone.DeviceID)
+			continue
+		}
+		err = pubtok.Error()
+		if err != nil {
+			log.Printf("Could not publish message to MQTT broker for '%v': %v", drone.DeviceID, err)
+			continue
+		}
+	}
+}
+
 // handle trust message from drone
 // drone has initialized its ssh keys and is ready to be joined
 func handleTrustMessage(deviceID string, payload []byte) {
@@ -442,6 +504,76 @@ func (f *Fleet) updateConfig() error {
 		return err
 	}
 	cmd = exec.Command("git", "-c", "user.email=\"commander@cloud\"", "-c", "user.name=\"Commander\"", "commit", "-m", "Update config")
+	cmd.Dir = tmpPath
+	out, err = cmd.CombinedOutput()
+	if err != nil {
+		log.Printf("%s\n\nCould not create a commit", out)
+		return err
+	}
+
+	cmd = exec.Command("git", "push", "origin", "main")
+	cmd.Dir = tmpPath
+	out, err = cmd.CombinedOutput()
+	if err != nil {
+		log.Printf("%s\n\nCould not push to origin", out)
+		return err
+	}
+
+	out, err = exec.Command("rm", "-rf", tmpPath).CombinedOutput()
+	if err != nil {
+		log.Printf("%s\n\nCould not remove temporary folder", out)
+		return err
+	}
+
+	return nil
+}
+
+type Task struct {
+	Type     string
+	Priority int64
+	Payload  string
+}
+
+func (f *Fleet) addTask(c context.Context, taskType string, priority int64, payload string) error {
+	task := Task{
+		Type:     taskType,
+		Priority: priority,
+		Payload:  payload,
+	}
+
+	b, err := yaml.Marshal(task)
+	if err != nil {
+		log.Printf("Could not marshal task")
+		return err
+	}
+
+	taskfile := fmt.Sprintf("backlog/%s.yaml", uuid.New().String())
+
+	tmpPath := filepath.Join("tmp", uuid.New().String())
+	repoPath := filepath.Join(f.Slug, "repositories", "fleet.git")
+
+	out, err := exec.Command("git", "clone", repoPath, tmpPath).CombinedOutput()
+	if err != nil {
+		log.Printf("%s\n\nCould not clone local repo", out)
+		return err
+	}
+
+	_ = os.Mkdir(filepath.Join(tmpPath, "backlog"), 0644)
+
+	err = ioutil.WriteFile(filepath.Join(tmpPath, taskfile), b, 0644)
+	if err != nil {
+		log.Printf("Could not write %s", taskfile)
+		return err
+	}
+
+	cmd := exec.Command("git", "add", taskfile)
+	cmd.Dir = tmpPath
+	out, err = cmd.CombinedOutput()
+	if err != nil {
+		log.Printf("%s\n\nCould not add %s to commit", out, taskfile)
+		return err
+	}
+	cmd = exec.Command("git", "-c", "user.email=\"commander@cloud\"", "-c", "user.name=\"Commander\"", "commit", "-m", "Update backlog")
 	cmd.Dir = tmpPath
 	out, err = cmd.CombinedOutput()
 	if err != nil {
