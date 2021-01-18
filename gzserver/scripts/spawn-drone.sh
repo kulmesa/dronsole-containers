@@ -1,8 +1,8 @@
 #!/bin/bash
 
-if [[ $# -lt 6 ]]; then
+if [[ $# -lt 10 ]]; then
     echo "Too few arguments!"
-    echo "$0 <mavlink_addr> <mavlink_udp_port> <mavlink_tcp_port> <name> <pos_x> <pos_y>"
+    echo "$0 <mavlink_addr> <mavlink_udp_port> <mavlink_tcp_port> <name> <pos_x> <pos_y> <pos_z> <yaw> <pitch> <roll>"
     exit 1
 fi
 
@@ -10,6 +10,10 @@ mav_addr=$1
 name=$4
 pos_x=$5
 pos_y=$6
+pos_z=$7
+yaw=$8
+pitch=$9
+roll=${10}
 
 export PX4_SIM_MODEL=ssrc_fog_x
 
@@ -37,6 +41,9 @@ gz model --spawn-file="/tmp/${PX4_SIM_MODEL}_${name}.sdf" \
          --model-name="${PX4_SIM_MODEL}_${name}" \
          -x "${pos_x}" \
          -y "${pos_y}" \
-         -z 0.0 || exit
+         -z "${pos_z}" \
+         -Y "${yaw}" \
+         -P "${pitch}" \
+         -R "${roll}" || exit
 
 echo "Done"

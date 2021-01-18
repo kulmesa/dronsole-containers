@@ -103,13 +103,17 @@ func createDroneHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var requestBody struct {
-		DroneLocation  string `json:"drone_location"`
-		DeviceID       string `json:"device_id"`
-		MAVLinkAddress string `json:"mavlink_address"`
-		MAVLinkUDPPort int32  `json:"mavlink_udp_port"`
-		MAVLinkTCPPort int32  `json:"mavlink_tcp_port"`
-		PosX           int32  `json:"pos_x"`
-		PosY           int32  `json:"pos_y"`
+		DroneLocation  string  `json:"drone_location"`
+		DeviceID       string  `json:"device_id"`
+		MAVLinkAddress string  `json:"mavlink_address"`
+		MAVLinkUDPPort int32   `json:"mavlink_udp_port"`
+		MAVLinkTCPPort int32   `json:"mavlink_tcp_port"`
+		PosX           float64 `json:"pos_x"`
+		PosY           float64 `json:"pos_y"`
+		PosZ           float64 `json:"pos_z"`
+		Pitch          float64 `json:"pitch"`
+		Yaw            float64 `json:"yaw"`
+		Roll           float64 `json:"roll"`
 	}
 
 	err := json.NewDecoder(r.Body).Decode(&requestBody)
@@ -137,13 +141,17 @@ func createDroneHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Cloud not lookup mavlink IP", http.StatusInternalServerError)
 		return
 	}
-	command := fmt.Sprintf("/gzserver-api/scripts/spawn-drone.sh %s %d %d %s %d %d",
+	command := fmt.Sprintf("/gzserver-api/scripts/spawn-drone.sh %s %d %d %s %f %f %f %f %f %f",
 		ips[0].String(),
 		requestBody.MAVLinkUDPPort,
 		requestBody.MAVLinkTCPPort,
 		requestBody.DeviceID,
 		requestBody.PosX,
-		requestBody.PosY)
+		requestBody.PosY,
+		requestBody.PosZ,
+		requestBody.Yaw,
+		requestBody.Pitch,
+		requestBody.Roll)
 
 	// add drone model and connect it to the mavlink
 	droneSpawnCmd, err := startCommandWithLogging(fmt.Sprintf("drone (%s): ", requestBody.DeviceID), "bash", "-c", command)
