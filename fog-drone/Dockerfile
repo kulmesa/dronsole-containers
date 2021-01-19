@@ -19,6 +19,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-foxy-ros-core \
     && rm -rf /var/lib/apt/lists/*
 
+# Install gstreamer libraries for video streaming
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gstreamer1.0-0 \
+    gstreamer1.0-plugins-base \
+    gstreamer1.0-plugins-good \
+    gstreamer1.0-plugins-bad \
+    gstreamer1.0-rtsp \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install MAVSDK
 RUN curl -fsSL https://github.com/mavlink/MAVSDK/releases/download/v0.34.0/mavsdk_0.34.0_ubuntu20.04_amd64.deb -o mavsdk_0.34.0_ubuntu20.04_amd64.deb \
     && dpkg -i mavsdk_0.34.0_ubuntu20.04_amd64.deb \
