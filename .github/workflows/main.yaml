@@ -16,3 +16,12 @@ jobs:
           registry: ghcr.io
           username: ${{ secrets.PACKAGES_USER }}
           password: ${{ secrets.PACKAGES_TOKEN }}
+
+      - name: Build tii-fog-drone image and push
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          context: ./fog-drone/
+          file: ./fog-drone/Dockerfile
+          push: false
+          tags: ghcr.io/kulmesa/tii-fog-drone:latest
