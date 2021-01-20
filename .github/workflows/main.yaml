@@ -23,5 +23,5 @@ jobs:
         with:
           context: ./fog-drone/
           file: ./fog-drone/Dockerfile
-          push: false
+          push: true
           tags: ghcr.io/kulmesa/tii-fog-drone:latest
