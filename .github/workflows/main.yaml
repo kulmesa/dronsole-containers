@@ -1,0 +1,17 @@
+name: main
+
+on:
+  push:
+    branches: main
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - shell: bash
+        env:
+          PACKAGES_USER: ${{ secrets.PACKAGES_USER }}
+        run: |
+          echo "hello $PACKAGES_USER"
