@@ -19,11 +19,50 @@ jobs:
           username: ${{ secrets.PACKAGES_USER }}
           password: ${{ secrets.PACKAGES_TOKEN }}
 
+      - name: Build tii-fleet-management image and push
+        uses: docker/build-push-action@v2
+        with:
+          context: ./fleet-management/
+          file: ./fleet-management/Dockerfile
+          push: true
+          tags: ghcr.io/kulmesa/tii-fleet-management:latest
+
       - name: Build tii-fog-drone image and push
-        id: docker_build
         uses: docker/build-push-action@v2
         with:
           context: ./fog-drone/
           file: ./fog-drone/Dockerfile
           push: true
           tags: ghcr.io/kulmesa/tii-fog-drone:latest
+
+      - name: Build tii-gzserver image and push
+        uses: docker/build-push-action@v2
+        with:
+          context: ./gzserver/
+          file: ./gzserver/Dockerfile
+          push: true
+          tags: ghcr.io/kulmesa/tii-gzserver:latest
+
+      - name: Build tii-gzweb image and push
+        uses: docker/build-push-action@v2
+        with:
+          context: ./gzweb/
+          file: ./gzweb/Dockerfile
+          push: true
+          tags: ghcr.io/kulmesa/tii-gzweb:latest
+
+      - name: Build tii-mqtt-server image and push
+        uses: docker/build-push-action@v2
+        with:
+          context: ./mqtt-server/
+          file: ./mqtt-server/Dockerfile
+          push: true
+          tags: ghcr.io/kulmesa/tii-mqtt-server:latest
+
+      - name: Build tii-video-server image and push
+        uses: docker/build-push-action@v2
+        with:
+          context: ./video-server/
+          file: ./video-server/Dockerfile
+          push: true
+          tags: ghcr.io/kulmesa/tii-video-server:latest
